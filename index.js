@@ -11,6 +11,31 @@
      * @constructor
      * @export
      */
+    function Bullet(x, y, parent){
+        this.x = x;
+        this.y = y;
+        this.velX = 5;
+        this.parent = parent;
+    }
+
+    Bullet.prototype = {
+        update: function() {
+            this.x += this.velX;
+            //if(this.parent.bullets[0] === this) console.log(this.x + ", " + this.parent.obstacles[0].xPos);
+            if((this.parent.horizon.obstacles.length && this.x >= this.parent.horizon.obstacles[0].xPos) || this.x >= this.parent.canvas.width){
+                this.parent.bullets.shift();
+                if(this.parent.horizon.obstacles.length) this.parent.horizon.obstacles[0].remove = true;
+                delete this; //delet
+            }
+            this.draw();
+        },
+        draw: function() {
+            this.parent.canvasCtx.fillStyle = '#535353'
+            this.parent.canvasCtx.fillRect(this.x, this.y + 20, 20, 6);
+        }
+    }
+
+
     function Runner(outerContainerId, opt_config) {
         // Singleton
         if (Runner.instance_) {
@@ -43,6 +68,8 @@
         this.currentSpeed = this.config.SPEED;
 
         this.obstacles = [];
+
+        this.bullets = [];
 
         this.activated = false; // Whether the easter egg has been activated.
         this.playing = false; // Whether the game is currently in play state.
@@ -203,7 +230,8 @@
     Runner.keycodes = {
         JUMP: { '38': 1, '32': 1 },  // Up, spacebar
         DUCK: { '40': 1 },  // Down
-        RESTART: { '13': 1 }  // Enter
+        RESTART: { '13': 1 },  // Enter
+        SHOOT: {'90': 1} //lol
     };
 
 
@@ -525,6 +553,9 @@
             if (this.playing) {
                 this.clearCanvas();
 
+                for(var b of this.bullets) b.update();
+                console.log(this.bullets);
+
                 if (this.tRex.jumping) {
                     this.tRex.updateJump(deltaTime);
                 }
@@ -698,6 +729,12 @@
                     this.tRex.setDuck(true);
                 }
             }
+
+            if (this.playing && !this.crashed && Runner.keycodes.SHOOT[e.keyCode]) {
+                e.preventDefault();
+                console.log(`(${this.tRex.xPos}, ${this.tRex.yPos})`);
+                this.bullets.push(new Bullet(this.tRex.xPos, this.tRex.yPos, this));
+            }
         },
 
 
@@ -812,6 +849,7 @@
 
         restart: function () {
             if (!this.raqId) {
+                this.bullets = [];
                 this.playCount++;
                 this.runningTime = 0;
                 this.playing = true;
@@ -2600,6 +2638,7 @@
 
             for (var i = 0; i < this.obstacles.length; i++) {
                 var obstacle = this.obstacles[i];
+                //console.log(obstacle);
                 obstacle.update(deltaTime, currentSpeed);
 
                 // Clean up existing obstacles.
