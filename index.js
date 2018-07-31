@@ -12,17 +12,27 @@
      * @export
      */
     function Bullet(x, y, parent){
-        this.x = x;
-        this.y = y;
+        this.xPos = x;
+        this.yPos = y;
         this.velX = 5;
         this.parent = parent;
+        this.config = {
+            WIDTH: 20,
+            HEIGHT: 6
+        }
     }
 
     Bullet.prototype = {
         update: function() {
-            this.x += this.velX;
+            this.xPos += this.velX;
             //if(this.parent.bullets[0] === this) console.log(this.x + ", " + this.parent.obstacles[0].xPos);
-            if((this.parent.horizon.obstacles.length && this.x >= this.parent.horizon.obstacles[0].xPos) || this.x >= this.parent.canvas.width){
+            //checkForCollision(this.parent.horizon.obstacles[0], this)
+            //this.xPos >= this.parent.horizon.obstacles[0].xPos
+            if((this.parent.horizon.obstacles.length && 
+                this.xPos >= this.parent.horizon.obstacles[0].xPos// && 
+                //this.yPos >= this.parent.horizon.obstacles[0].yPos && //send help
+                //this.yPos <= this.parent.horizon.obstacles[0].yPos+this.parent.horizon.obstacles[0].typeConfig.height
+                ) || this.xPos >= this.parent.canvas.width){
                 this.parent.bullets.shift();
                 if(this.parent.horizon.obstacles.length) this.parent.horizon.obstacles[0].remove = true;
                 delete this; //delet
@@ -31,7 +41,7 @@
         },
         draw: function() {
             this.parent.canvasCtx.fillStyle = '#535353'
-            this.parent.canvasCtx.fillRect(this.x, this.y + 20, 20, 6);
+            this.parent.canvasCtx.fillRect(this.xPos, this.yPos + 20, this.config.WIDTH, this.config.HEIGHT);
         }
     }
 
@@ -231,7 +241,7 @@
         JUMP: { '38': 1, '32': 1 },  // Up, spacebar
         DUCK: { '40': 1 },  // Down
         RESTART: { '13': 1 },  // Enter
-        SHOOT: {'90': 1} //lol
+        SHOOT: {'90': 1, '88': 1} //lol
     };
 
 
@@ -554,7 +564,6 @@
                 this.clearCanvas();
 
                 for(var b of this.bullets) b.update();
-                console.log(this.bullets);
 
                 if (this.tRex.jumping) {
                     this.tRex.updateJump(deltaTime);
@@ -732,7 +741,6 @@
 
             if (this.playing && !this.crashed && Runner.keycodes.SHOOT[e.keyCode]) {
                 e.preventDefault();
-                console.log(`(${this.tRex.xPos}, ${this.tRex.yPos})`);
                 this.bullets.push(new Bullet(this.tRex.xPos, this.tRex.yPos, this));
             }
         },
